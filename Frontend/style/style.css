@@ -61,3 +61,38 @@
     font-size: 16px;
     cursor: pointer;
 }
+
+.todo-list li {
+    list-style: none;
+    font-size: 17px;
+    padding: 12px 8px 12px 50px;
+    user-select: none;
+    cursor: pointer;
+    position: relative;
+}
+
+.todo-list li::before {
+    content: '';
+    position: absolute;
+    background-image: url('../images/uncheck.svg');
+    background-size: cover;
+    background-position: center;
+    border-radius: 50%;
+    top: 2px;
+    height: 36px;
+    width: 36px;
+    left: 2px;
+}
+
+.todo-list li.checked {
+    color: #555;
+    text-decoration: line-through;
+}
+
+.todo-list li.checked::before {
+    background-image: url('../images/check.svg');
+    height: 28px;
+    width: 28px;
+    left: 8px;
+    top: 5px;
+}
