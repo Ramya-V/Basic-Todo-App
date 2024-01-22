@@ -46,21 +46,82 @@ app.get('/getTasks', async (req, res) => {
     }
 })
 
+app.put('/updateTask/:type', async (req, res) => {
+    try {
+        console.log(req.body, req.params);
+        isvalid = validation('update', req);
+        console.log(isvalid)
+        if (!isvalid.status) {
+            let response = await taskModel.findByIdAndUpdate(req.body.id, req.body);
+            (!response) ?
+                res.status(404).send({ message: 'Task is not found' }) :
+                res.status(200).send({ message: 'Task updated successfully' })
+        }
+        else {
+            res.status(400).send({ error: isvalid.message })
+        }
+    } 
+    catch (e) {
+        console.log(e)
+        res.status(500).send({ error: e })
 
-const validation = (type, req) => {
+    }
+})
+
+const validation = (validationType, req) => {
     let response = {
         status: false,
-        message: ''
+        message: []
     }
-    if (type == 'create') {
+    let errorMessage = [];
+    if (validationType == 'update') {
+        let { type } = req.params;
+        console.log(req.params)
+        if (type == 'info' || 'status') {
+            if (!req.body.id) {
+                errorMessage.push('Id is a required field')
+                response = {
+                    status: true,
+                    message: errorMessage
+                }
+            }
+        }
+        if (type == 'status') {
+            if (!req.body.status) {
+                errorMessage.push('Status is a required field')
+                response = {
+                    status: true,
+                    message: errorMessage
+                }
+            }
+            else {
+                console.log("test")
+                if (typeof req.body.status == 'number') {
+                    errorMessage.push('Status is a string type')
+                    response = {
+                        status: true,
+                        message: errorMessage
+                    }
+                }
+            }
+        }
+
+    }
+    if (validationType == 'create' || 'update') {
         if (!req.body.description) {
-            response.status = true;
-            response.message = 'Description is a required field';
+            errorMessage.push('Description is a required field')
+            response = {
+                status: true,
+                message: errorMessage
+            }
         }
         else {
             if (typeof req.body.description == 'number') {
-                response.status = true;
-                response.message = 'Description is a string type';
+                errorMessage.push('Description is a string type')
+                response = {
+                    status: true,
+                    message: errorMessage
+                }
             }
         }
     }
