@@ -24,7 +24,7 @@ app.post('/createTask', async (req, res) => {
             let taskDetails = new taskModel({
                 description: req.body.description
             })
-            taskDetails.save();
+            await taskDetails.save();
             res.status(200).send({ message: 'Task created successfully' })
 
         }
@@ -36,6 +36,16 @@ app.post('/createTask', async (req, res) => {
 
     }
 })
+
+app.get('/getTasks', async (req, res) => {
+    try {
+        let response = await taskModel.find({});
+        res.status(200).send({ data: response || [] })
+    } catch (e) {
+        res.status(500).send({ error: e })
+    }
+})
+
 
 const validation = (type, req) => {
     let response = {
