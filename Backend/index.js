@@ -5,21 +5,21 @@ require('dotenv').config();
 
 const app = express();
 const port = 8080;
+let isvalid;
 
+// Listens to the port and process the request
 app.listen(port, () => { console.log(`Server is running in the port ${port}`) });
+// Middleware to convert the request body into JSON format, so that we can access and process the data
 app.use(express.json());
-
+// Mongodb connection
 mongoose.connect(process.env.DB_URL)
     .then(() => { console.log('DB connection is established') })
     .catch((e) => { console.log('DB connection failed') });
 
-let isvalid = '';
-
+// Creates task in todo  
 app.post('/createTask', async (req, res) => {
     try {
-        console.log(req.body)
         isvalid = validation('create', req);
-        console.log(isvalid)
         if (!isvalid.status) {
             let taskDetails = new taskModel({
                 description: req.body.description
@@ -31,31 +31,32 @@ app.post('/createTask', async (req, res) => {
         else {
             res.status(400).send({ error: isvalid.message })
         }
-    } catch (e) {
+    }
+    catch (e) {
         res.status(500).send({ error: e })
-
     }
 })
 
+// Gets the active tasks in todo  
 app.get('/getTasks', async (req, res) => {
     try {
         let response = await taskModel.find({ isActive: true });
         res.status(200).send({ data: response || [] })
-    } catch (e) {
+    }
+    catch (e) {
         res.status(500).send({ error: e })
     }
 })
 
+// Updates the task info in todo  
 app.put('/updateTask/:type', async (req, res) => {
     try {
-        console.log(req.body, req.params);
         isvalid = validation('update', req);
-        console.log(isvalid)
         if (!isvalid.status) {
             let response = await taskModel.findByIdAndUpdate(req.body.id, req.body);
             (!response) ?
                 res.status(404).send({ message: 'Task is not found' }) :
-                res.status(200).send({ message: 'Task updated successfully' })
+                res.status(200).send({ message: `Task updated successfully` })
         }
         else {
             res.status(400).send({ error: isvalid.message })
@@ -64,38 +65,21 @@ app.put('/updateTask/:type', async (req, res) => {
     catch (e) {
         console.log(e)
         res.status(500).send({ error: e })
-
     }
 })
 
-app.put('/removeTask', async (req, res) => {
-    try {
-        isvalid = validation('remove', req);
-        console.log(isvalid)
-        if (!isvalid.status) {
-            let response = await taskModel.findByIdAndUpdate(req.body.id, req.body);
-            (!response) ?
-                res.status(404).send({ message: 'Task is not found' }) :
-                res.status(200).send({ message: 'Task removed successfully' })
-        }
-        else {
-            res.status(400).send({ error: isvalid.message })
-        }
-    }
-    catch (e) {
-        console.log(e)
-        res.status(500).send({ error: e })
-
-    }
-})
-
+// Validation 
 const validation = (validationType, req) => {
     let response = {
         status: false,
         message: []
     }
     let errorMessage = [];
-    let updateType = req.params.type
+    let updateType = req.params.type;
+
+    /* Description field validation
+    Description mandatory for create and updateInfo task
+    */
     if (validationType == 'create' || (validationType == 'update' && updateType == 'info')) {
         if (!req.body.description) {
             errorMessage.push('Description is a required field')
@@ -114,6 +98,12 @@ const validation = (validationType, req) => {
             }
         }
     }
+
+    /* Id, Status, Is Active field validation
+    Id mandatory for updateInfo, updateStatus and updateRemove
+    Status mandatory for updateStatus
+    Is Active mandatory for updateRemove
+    */
     if (validationType == 'update' || 'remove') {
 
         if (!req.body.id) {
@@ -142,7 +132,6 @@ const validation = (validationType, req) => {
             }
         }
         if (updateType == 'remove') {
-            console.log(req.body.isActive)
             if (req.body.isActive == (null || undefined)) {
                 errorMessage.push('isActive is a required field')
                 response = {
