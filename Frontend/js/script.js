@@ -1,8 +1,17 @@
+// Import 'axios' using its CDN
+import axios from 'https://cdn.skypack.dev/axios';
 const inputBox = document.getElementById('input-box');
 const listContainer = document.getElementById('list-container');
+
 let taskId = 0;
 let editId;
 let editData;
+
+const loadTasks = async () => {
+    let response = await axios.get('http://localhost:8080/getTasks');
+    console.log("fetch data", response);
+
+}
 
 const upsertTask = () => {
     let taskDescription = inputBox.value;
@@ -66,7 +75,7 @@ listContainer.addEventListener('click', (e) => {
 })
 
 const editTask = (e) => {
-    editData=e;
+    editData = e;
     editId = e.target.id.split('-')[2];
     console.log(editId)
     console.log(document.getElementById(`task-${editId}`).textContent)
@@ -85,4 +94,6 @@ const removeTask = (e) => {
 const taskStatus = (e) => {
     e.target.classList.toggle('checked');
 }
+
+window.onload = loadTasks;
 
