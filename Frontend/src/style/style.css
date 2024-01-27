@@ -1,3 +1,4 @@
+/* Universal */
 * {
     margin: 0;
     padding: 0;
@@ -5,6 +6,7 @@
     box-sizing: border-box;
 }
 
+/* Todo Layout */
 .container {
     width: 100%;
     min-height: 100vh;
@@ -74,14 +76,14 @@
 }
 
 .todo-list li h5 {
+    width: 80%;
     font-size: 16px;
     font-weight: 100;
 }
 
-.todo-list li::before {
+.todo-list li .todoIcon {
     content: '';
     position: absolute;
-    background-image: url('../images/uncheck.svg');
     background-size: cover;
     background-position: center;
     border-radius: 50%;
@@ -91,15 +93,14 @@
     left: 2px;
 }
 
-.todo-list li.checked {
+.todo-list li h5.task-strike{
     color: #555;
     text-decoration: line-through;
 }
 
-.todo-list li.checked::before {
-    background-image: url('../images/check.svg');
-    height: 28px;
-    width: 28px;
+.todo-list li .checked {
+    height: 26px;
+    width: 26px;
     left: 8px;
     top: 5px;
 }
@@ -107,4 +108,9 @@
 .icon-resize {
     height: 20px;
     margin-left: 20px;
+}
+
+.disable {
+    opacity: 0.5;
+    pointer-events: none;
 }

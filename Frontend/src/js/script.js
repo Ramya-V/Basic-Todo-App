@@ -1,32 +1,49 @@
 import axios from 'https://cdn.skypack.dev/axios';
+
 const inputBox = document.getElementById('input-box');
 const taskListContainer = document.getElementById('list-container');
 
-// let taskId = 0;
-let editId;
-let editData;
-
+/* Loads the task details in the todo*/
 const loadTasks = async () => {
-    let response = await axios.get('http://localhost:8080/getTasks');
-    console.log("fetch data", response.data.data);
-    let data = response.data.data;
-    data.forEach((element) => {
-        console.log(element._id)
+    try {
+        // Clears the task list
+        taskListContainer.innerHTML = '';
+
+        // Gets the task details
+        let response = await axios.get('http://localhost:8080/getTasks');
+        let data = response.data.data;
+
+        // Binds the task details
+        data.forEach((element) => {
+            // li tag is created to load the task details
             let taskList = document.createElement('li');
-            let taskDetails = document.createElement('h5')
+            taskList.setAttribute("id", `task-${element._id}`);
+
+            // check/uncheck Icon is created
+            let todoIcon = document.createElement('img');
+            setAttributes(todoIcon, {
+                src: element.status == "done" ? './images/check.svg' : './images/uncheck.svg',
+                alt: 'uncheck',
+                class: element.status == "done" ? 'todoIcon checked' : 'todoIcon',
+                id: `todo-icon-${element._id}`,
+                name: 'todo-icon'
+            });
+
+            // Task description 
+            let taskDetails = document.createElement('h5');
             taskDetails.innerHTML = element.description;
-            taskListContainer.appendChild(taskList);
+            element.status == "done" && taskDetails.classList.toggle('task-strike');
+
+            // Action Icons - edit and remove
             let actionIcons = document.createElement('span');
             let editIcon = document.createElement('img');
             setAttributes(editIcon, {
                 src: './images/edit.svg',
                 alt: 'edit',
-                class: 'icon-resize',
+                class: element.status == "done" ? 'icon-resize disable' : 'icon-resize',
                 id: `edit-icon-${element._id}`,
                 name: 'edit-icon'
             })
-            console.log("editIcon", editIcon)
-
             let removeIcon = document.createElement('img');
             setAttributes(removeIcon, {
                 src: './images/remove.svg',
@@ -35,118 +52,134 @@ const loadTasks = async () => {
                 id: `remove-icon-${element._id}`,
                 name: 'remove-icon'
             })
+
+            // Created child elements are appended to the parent element
             actionIcons.appendChild(editIcon);
             actionIcons.appendChild(removeIcon);
+            taskList.appendChild(todoIcon);
             taskList.appendChild(taskDetails);
             taskList.appendChild(actionIcons);
-    })
-
+            taskListContainer.appendChild(taskList);
+        })
+    }
+    catch (e) {
+        console.log("Error in loadTasks ", e)
+    }
 }
 
-const upsertTask = () => {
-    let taskDescription = inputBox.value;
-    console.log(inputBox.innerHTML)
-    if (!taskDescription) {
-        alert("Please enter your works to be done");
-    }
-    else if (taskDescription.length > 30) {
-        alert("Please enter your works to be done in 30 characters");
+/* Creates or updates the task info in the todo*/
+const upsertTask = async () => {
+    try {
+        let taskDescription = inputBox.value;
+        // Mandatory validation 
+        if (!taskDescription) {
+            alert("Please enter your works to be done");
+        }
+        // validation Only 30<= characters are accepted 
+        else if (taskDescription.length > 30) {
+            alert("Please enter your works to be done in 30 characters");
+        }
+        // Creates or updates task info
+        else {
+            if (document.getElementById('upsert').innerHTML == 'Add') {
+                await axios.post('http://localhost:8080/createTask', { description: taskDescription });
+            }
+            else {
+                let id = document.getElementById('upsert').name;
+
+                await axios.put('http://localhost:8080/updateTask/info',
+                    {
+                        id,
+                        description: taskDescription
+                    });
+                document.getElementById('upsert').innerHTML = 'Add';
+
+            }
+            loadTasks()
+        }
         inputBox.value = '';
     }
-    else {
-        if (document.getElementById('upsert').innerHTML == 'Add') {
-            taskId++;
-            let listElement = document.createElement('li');
-            let taskDetails = document.createElement('h5')
-            listElement.setAttribute('id', `task-${taskId}`);
-            taskDetails.innerHTML = taskDescription;
-            taskListContainer.appendChild(listElement);
-            inputBox.value = '';
-            let span = document.createElement('span');
-            span.setAttribute('class', 'modify-icons');
-            let editIcon = document.createElement('img');
-            setAttributes(editIcon, {
-                src: './images/edit.svg',
-                alt: 'edit',
-                class: 'icon-resize',
-                id: `edit-icon-${taskId}`,
-                name: 'edit-icon'
-            })
-
-            let removeIcon = document.createElement('img');
-            // editIcon.setAttribute('src', './images/edit.svg');
-            // editIcon.setAttribute('alt', 'edit');
-            // editIcon.setAttribute('class', 'icon-resize');
-            // editIcon.setAttribute('id', `edit-icon-${taskId}`);
-            // editIcon.setAttribute('name', 'edit-icon');
-            // removeIcon.setAttribute('src', './images/remove.svg');
-            // removeIcon.setAttribute('alt', 'remove');
-            // removeIcon.setAttribute('class', 'icon-resize');
-            // removeIcon.setAttribute('id', `remove-icon-${taskId}`);
-            // removeIcon.setAttribute('name', `remove-icon`);
-            setAttributes(removeIcon, {
-                src: './images/remove.svg',
-                alt: 'remove',
-                class: 'icon-resize',
-                id: `remove-icon-${taskId}`,
-                name: 'remove-icon'
-            })
-
-            span.appendChild(editIcon);
-            span.appendChild(removeIcon);
-            listElement.appendChild(taskDetails);
-            listElement.appendChild(span);
-        }
-        else {
-            console.log(document.getElementById(`task-${editId}`).childNodes[0].innerHTML)
-            document.getElementById(`task-${editId}`).childNodes[0].innerHTML = taskDescription;
-            inputBox.value = '';
-            document.getElementById('upsert').innerHTML = 'Add';
-
-        }
+    catch (e) {
+        console.log("Error in upsertTask ", e)
     }
 }
 
+// Edits the task
 const editTask = (e) => {
-    editData = e;
-    editId = e.target.id.split('-')[2];
-    console.log(editId)
-    console.log(document.getElementById(`task-${editId}`).textContent)
-    inputBox.value = document.getElementById(`task-${editId}`).textContent;
-    console.log(" document.getElementById('add')", document.getElementById('upsert'))
-    document.getElementById('upsert').innerHTML = 'Update';
+    try {
+        let id = e.target.id.split('-')[2];
+        inputBox.value = document.getElementById(`task-${id}`).childNodes[1].textContent;
+        document.getElementById('upsert').innerHTML = 'Update';
+        document.getElementById('upsert').name = id;
+    }
+    catch (e) {
+        console.log("Error in editTask ", e)
+    }
 }
 
-const removeTask = (e) => {
-    let id = e.target.id.split('-')[2]
-    console.log(id)
-    console.log(document.getElementById(`task-${id}`))
-    document.getElementById(`task-${id}`).remove()
+// removes the task
+const removeTask = async (e) => {
+    try {
+        let id = e.target.id.split('-')[2];
+        await axios.put('http://localhost:8080/updateTask/remove',
+            {
+                id,
+                isActive: false
+            });
+        loadTasks();
+    }
+    catch (e) {
+        console.log("Error in removeTask ", e)
+    }
 }
 
-const taskStatus = (e) => {
-    e.target.classList.toggle('checked');
+// Updates the task status - done or undone
+const taskStatus = async (e) => {
+    try {
+        let id = e.target.id.split('-')[2],
+            status = Object.values(e.target.classList).includes('checked') ? "undone" : "done";
+        document.getElementById('upsert').innerHTML = 'Add';
+        inputBox.value = '';
+        await axios.put('http://localhost:8080/updateTask/status',
+            {
+                id,
+                status
+            })
+        loadTasks();
+    }
+    catch (e) {
+        console.log("Error in taskStatus ", e)
+    }
 }
 
-const setAttributes = (element, attributes) =>{
-    Object.keys(attributes).forEach((attr)=>{
-        // console.log("element", element)
-        element.setAttribute(attr, attributes[attr])
-    })
-}
-
+/* Added event listener to the edit, remove and todo icon 
+to perform the respective events */
 taskListContainer.addEventListener('click', (e) => {
-    console.log(e.target.name, e.target.id)
     if (e.target.name == 'edit-icon') {
         editTask(e);
     }
-    else if (e.target.name == 'remove-icon') {
+    if (e.target.name == 'remove-icon') {
         removeTask(e);
     }
-    else {
+    if (e.target.name == "todo-icon") {
         taskStatus(e);
     }
+
 })
 
+// Multiple attributes are set for an element
+const setAttributes = (element, attributes) => {
+    try {
+        Object.keys(attributes).forEach((attr) => {
+            element.setAttribute(attr, attributes[attr])
+        })
+    }
+    catch (e) {
+        console.log("Error in setAttributes ", e)
+    }
+}
+
+// Global contexts
 window.onload = loadTasks;
+window.upsertTask = upsertTask;
 
