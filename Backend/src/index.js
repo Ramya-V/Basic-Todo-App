@@ -1,5 +1,6 @@
 const express = require("express");
 const mongoose = require("mongoose");
+const cors = require('cors');
 const taskModel = require("./models/taskModel");
 const validation = require("./validator/taskValidator");
 require("dotenv").config();
@@ -11,6 +12,8 @@ const port = 8080;
 app.listen(port, () => {console.log(`Server is running in the port ${port}`);});
 // Middleware to convert the request body into JSON format, so that we can access and process the data
 app.use(express.json());
+// Enable CORS for all routes
+app.use(cors());
 // Mongodb connection
 mongoose.connect(process.env.DB_URL)
   .then(() => {console.log("DB connection is established");})
